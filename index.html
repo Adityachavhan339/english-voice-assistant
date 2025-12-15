@@ -1,52 +1,51 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>English Assistant</title>
-</head>
-<body style="text-align:center;margin-top:50px;">
-  <h2>Tap & Speak 🎤</h2>
-  <button onclick="start()" style="font-size:30px;">🎤</button>
-  <p id="text"></p>
-
 <script>
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
-const recognition = new SpeechRecognition();
-recognition.lang = "en-US";
+let recognition;
 
-function start(){
+function start() {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Speech recognition not supported on this browser");
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
   recognition.start();
+
+  recognition.onresult = function (e) {
+    const text = e.results[0][0].transcript;
+    document.getElementById("text").innerText = text;
+
+    fetch("/api/reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.reply) {
+          speak(d.reply);
+        } else {
+          speak("I did not get a reply. Please try again.");
+        }
+      })
+      .catch(() => {
+        speak("The AI is not responding right now.");
+      });
+  };
+
+  recognition.onerror = function (e) {
+    alert("Mic error: " + e.error);
+  };
 }
 
-recognition.onresult = function(e){
-  const text = e.results[0][0].transcript;
-  document.getElementById("text").innerText = text;
-
-  fetch("/api/reply", {
-  method: "POST",
-  headers: {"Content-Type":"application/json"},
-  body: JSON.stringify({ text })
-})
-.then(r => {
-  if (!r.ok) throw new Error("Server error");
-  return r.json();
-})
-.then(d => {
-  if (d.reply) {
-    speak(d.reply);
-  } else {
-    speak("I did not get a reply. Please try again.");
-  }
-})
-.catch(err => {
-  console.error(err);
-  speak("The AI is not responding right now. Please try again later.");
-});
-
-function speak(text){
+function speak(text) {
   const u = new SpeechSynthesisUtterance(text);
   speechSynthesis.speak(u);
 }
 </script>
-</body>
-</html>
