@@ -1,72 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>English Assistant</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mic Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
-<body style="text-align:center; margin-top:50px; font-family:sans-serif;">
+<body style="text-align:center;margin-top:50px;font-size:20px">
 
-  <h2>Tap & Speak 🎤</h2>
+<h2>Mic Test 🎤</h2>
 
-  <button onclick="start()" style="font-size:24px;padding:10px 20px;">
-    🎙️ Speak
-  </button>
+<button id="btn" style="font-size:24px">Tap to Speak</button>
+<p id="out"></p>
 
-  <p id="text" style="margin-top:20px;font-size:18px;"></p>
+<script>
+document.getElementById("btn").onclick = () => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  <script>
-    let recognition;
+  if (!SR) {
+    alert("SpeechRecognition NOT supported");
+    return;
+  }
 
-    function start() {
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = "en-US";
 
-      if (!SpeechRecognition) {
-        alert("Speech recognition not supported on this browser");
-        return;
-      }
+  rec.onresult = e => {
+    document.getElementById("out").innerText =
+      e.results[0][0].transcript;
+  };
 
-      recognition = new SpeechRecognition();
-      recognition.lang = "en-US";
-      recognition.continuous = false;
-      recognition.interimResults = false;
+  rec.onerror = e => alert("Error: " + e.error);
 
-      recognition.start();
-
-      recognition.onresult = function (e) {
-        const text = e.results[0][0].transcript;
-        document.getElementById("text").innerText = text;
-
-        fetch("/api/reply", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text })
-        })
-        .then(r => r.json())
-        .then(d => {
-          if (d.reply) {
-            speak(d.reply);
-          } else {
-            speak("I did not get a reply.");
-          }
-        })
-        .catch(() => {
-          speak("The AI is not responding right now.");
-        });
-      };
-
-      recognition.onerror = function (e) {
-        alert("Mic error: " + e.error);
-      };
-    }
-
-    function speak(text) {
-      const u = new SpeechSynthesisUtterance(text);
-      speechSynthesis.speak(u);
-    }
-  </script>
+  rec.start();
+};
+</script>
 
 </body>
-</html>
+</html>      
