@@ -1,51 +1,72 @@
-<script>
-let recognition;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>English Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
 
-function start() {
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+<body style="text-align:center; margin-top:50px; font-family:sans-serif;">
 
-  if (!SpeechRecognition) {
-    alert("Speech recognition not supported on this browser");
-    return;
-  }
+  <h2>Tap & Speak 🎤</h2>
 
-  recognition = new SpeechRecognition();
-  recognition.lang = "en-US";
-  recognition.continuous = false;
-  recognition.interimResults = false;
+  <button onclick="start()" style="font-size:24px;padding:10px 20px;">
+    🎙️ Speak
+  </button>
 
-  recognition.start();
+  <p id="text" style="margin-top:20px;font-size:18px;"></p>
 
-  recognition.onresult = function (e) {
-    const text = e.results[0][0].transcript;
-    document.getElementById("text").innerText = text;
+  <script>
+    let recognition;
 
-    fetch("/api/reply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.reply) {
-          speak(d.reply);
-        } else {
-          speak("I did not get a reply. Please try again.");
-        }
-      })
-      .catch(() => {
-        speak("The AI is not responding right now.");
-      });
-  };
+    function start() {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  recognition.onerror = function (e) {
-    alert("Mic error: " + e.error);
-  };
-}
+      if (!SpeechRecognition) {
+        alert("Speech recognition not supported on this browser");
+        return;
+      }
 
-function speak(text) {
-  const u = new SpeechSynthesisUtterance(text);
-  speechSynthesis.speak(u);
-}
-</script>
+      recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.start();
+
+      recognition.onresult = function (e) {
+        const text = e.results[0][0].transcript;
+        document.getElementById("text").innerText = text;
+
+        fetch("/api/reply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        })
+        .then(r => r.json())
+        .then(d => {
+          if (d.reply) {
+            speak(d.reply);
+          } else {
+            speak("I did not get a reply.");
+          }
+        })
+        .catch(() => {
+          speak("The AI is not responding right now.");
+        });
+      };
+
+      recognition.onerror = function (e) {
+        alert("Mic error: " + e.error);
+      };
+    }
+
+    function speak(text) {
+      const u = new SpeechSynthesisUtterance(text);
+      speechSynthesis.speak(u);
+    }
+  </script>
+
+</body>
+</html>
