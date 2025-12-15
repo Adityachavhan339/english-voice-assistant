@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>English Assistant</title>
+</head>
+<body style="text-align:center;margin-top:50px;">
+  <h2>Tap & Speak 🎤</h2>
+  <button onclick="start()" style="font-size:30px;">🎤</button>
+  <p id="text"></p>
+
+<script>
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+recognition.lang = "en-US";
+
+function start(){
+  recognition.start();
+}
+
+recognition.onresult = function(e){
+  const text = e.results[0][0].transcript;
+  document.getElementById("text").innerText = text;
+
+  fetch("/api/reply", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ text })
+  })
+  .then(r => r.json())
+  .then(d => speak(d.reply));
+}
+
+function speak(text){
+  const u = new SpeechSynthesisUtterance(text);
+  speechSynthesis.speak(u);
+}
+</script>
+</body>
+</html>
