@@ -23,13 +23,25 @@ recognition.onresult = function(e){
   document.getElementById("text").innerText = text;
 
   fetch("/api/reply", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ text })
-  })
-  .then(r => r.json())
-  .then(d => speak(d.reply));
-}
+  method: "POST",
+  headers: {"Content-Type":"application/json"},
+  body: JSON.stringify({ text })
+})
+.then(r => {
+  if (!r.ok) throw new Error("Server error");
+  return r.json();
+})
+.then(d => {
+  if (d.reply) {
+    speak(d.reply);
+  } else {
+    speak("I did not get a reply. Please try again.");
+  }
+})
+.catch(err => {
+  console.error(err);
+  speak("The AI is not responding right now. Please try again later.");
+});
 
 function speak(text){
   const u = new SpeechSynthesisUtterance(text);
